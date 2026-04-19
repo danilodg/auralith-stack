@@ -20,6 +20,16 @@ type CliOptions = {
   help: boolean
 }
 
+class CliError extends Error {
+  hint?: string
+
+  constructor(message: string, hint?: string) {
+    super(message)
+    this.name = 'CliError'
+    this.hint = hint
+  }
+}
+
 const AVAILABLE_TEMPLATES: TemplateName[] = ['landing', 'dashboard']
 const TEXT_FILE_EXTENSIONS = new Set(['.css', '.env', '.example', '.html', '.js', '.json', '.md', '.mjs', '.ts', '.tsx', '.txt', '.yml', '.yaml'])
 
@@ -73,20 +83,35 @@ function parseArgs(argv: string[]): CliOptions {
 
     if (current === '--template') {
       const next = argv[index + 1]
+      if (!next || next.startsWith('-')) {
+        throw new CliError('Missing value for "--template".', 'Use "--template landing" or "--template dashboard".')
+      }
       if (next === 'landing' || next === 'dashboard') {
         options.template = next
         index += 1
+        continue
       }
-      continue
+      throw new CliError(
+        `Unsupported template "${next}".`,
+        `Supported templates: ${AVAILABLE_TEMPLATES.join(', ')}.`,
+      )
     }
 
     if (current === '--package-manager') {
       const next = argv[index + 1]
+      if (!next || next.startsWith('-')) {
+        throw new CliError('Missing value for "--package-manager".', 'Use "--package-manager npm" or "--package-manager pnpm".')
+      }
       if (next === 'npm' || next === 'pnpm') {
         options.packageManager = next
         index += 1
+        continue
       }
-      continue
+      throw new CliError('Unsupported package manager.', 'Supported package managers: npm, pnpm.')
+    }
+
+    if (current.startsWith('-')) {
+      throw new CliError(`Unknown option "${current}".`, 'Run "npx create-auralith-app --help" to see supported options.')
     }
   }
 
@@ -238,18 +263,24 @@ async function main() {
   const packageManager = options.packageManager ?? 'npm'
 
   if (!projectName || !isValidProjectName(projectName)) {
-    throw new Error('Invalid project name. Use only letters, numbers, dashes, and underscores.')
+    throw new CliError(
+      `Invalid project name "${projectName ?? ''}".`,
+      'Use letters, numbers, dashes, and underscores only. Example: "my-app".',
+    )
   }
 
   if (!AVAILABLE_TEMPLATES.includes(template)) {
-    throw new Error(`Unsupported template "${template}".`)
+    throw new CliError(`Unsupported template "${template}".`, `Supported templates: ${AVAILABLE_TEMPLATES.join(', ')}.`)
   }
 
   const targetDir = path.resolve(process.cwd(), projectName)
   const destinationExists = await pathExists(targetDir)
 
   if (destinationExists && !(await isDirectoryEmpty(targetDir))) {
-    throw new Error(`Target directory already exists and is not empty: ${targetDir}`)
+    throw new CliError(
+      `Target directory already exists and is not empty: ${targetDir}`,
+      'Choose another project name or remove existing files in that directory.',
+    )
   }
 
   const thisFilePath = fileURLToPath(import.meta.url)
@@ -258,7 +289,10 @@ async function main() {
   const templateDir = path.join(repoRoot, 'templates', template)
 
   if (!(await pathExists(templateDir))) {
-    throw new Error(`Template not found: ${template}`)
+    throw new CliError(
+      `Template not found: ${template}`,
+      'If you are developing locally, make sure templates exist under "templates/" at repo root.',
+    )
   }
 
   await fs.mkdir(targetDir, { recursive: true })
@@ -272,13 +306,25 @@ async function main() {
   if (options.install) {
     const installArgs = packageManager === 'pnpm' ? ['install'] : ['install']
     output.write(`\nInstalling dependencies with ${packageManager}...\n`)
-    await runCommand(packageManager, installArgs, targetDir)
+    try {
+      await runCommand(packageManager, installArgs, targetDir)
+    } catch {
+      throw new CliError(
+        `Dependency installation failed with ${packageManager}.`,
+        `Run "cd ${projectName} && ${packageManager} install" manually and check your Node/package manager setup.`,
+      )
+    }
   }
 
   if (options.git) {
     output.write('\nInitializing git repository...\n')
-    await runCommand('git', ['init'], targetDir)
-    await runCommand('git', ['add', '-A'], targetDir)
+    try {
+      await runCommand('git', ['init'], targetDir)
+      await runCommand('git', ['add', '-A'], targetDir)
+    } catch {
+      output.write('\nWarning: Could not initialize git repository.\n')
+      output.write(`Hint: Run "cd ${projectName} && git init && git add -A" manually.\n`)
+    }
   }
 
   output.write(
@@ -294,6 +340,11 @@ async function main() {
 }
 
 main().catch((error) => {
-  output.write(`\nError: ${error instanceof Error ? error.message : String(error)}\n`)
+  const message = error instanceof Error ? error.message : String(error)
+  const hint = error instanceof CliError ? error.hint : undefined
+  output.write(`\nError: ${message}\n`)
+  if (hint) {
+    output.write(`Hint: ${hint}\n`)
+  }
   process.exitCode = 1
 })
