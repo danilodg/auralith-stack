@@ -1,16 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Button, Card, DataTable, GlassPanel, Input, SectionLabel, SiteBackground, TableToolbar, Tag, Textarea } from 'auralith-ui'
+import { Button, Card, DataTable, GlassPanel, Input, SectionLabel, Select, SiteBackground, TableToolbar, Tag, Textarea } from 'auralith-ui'
 
 type Language = 'pt' | 'en'
 type ThemeMode = 'dark' | 'light' | 'system'
+type Period = '7d' | '30d' | '90d'
+type Segment = 'all' | 'smb' | 'mid' | 'enterprise'
+type Lifecycle = 'all' | 'trial' | 'active' | 'at-risk'
 type FormStatus = { type: 'idle' | 'success' | 'error'; message: string }
 
 type ProjectRow = {
-  project: string
-  status: string
+  account: string
+  lifecycle: Exclude<Lifecycle, 'all'>
+  segment: Exclude<Segment, 'all'>
+  mrr: string
   owner: string
-  sla: string
+  renewal: string
+  health: 'healthy' | 'watch' | 'critical'
 }
 
 const contactEmail = import.meta.env.VITE_CONTACT_EMAIL?.trim() || ''
@@ -23,25 +29,76 @@ const content = {
   pt: {
     app: '__APP_NAME__',
     header: {
-      title: 'Painel operacional pronto para produto',
-      subtitle: 'Template de dashboard com tabela, filtros e formulario de suporte conectado ao fluxo de leads.',
+      title: 'Cockpit operacional para escalar receita com previsibilidade',
+      subtitle: 'Template com filtros de decisao, visao de risco e contato tecnico integrado ao fluxo de leads.',
     },
     language: 'Idioma',
     theme: 'Tema',
     themes: { dark: 'Escuro', light: 'Claro', system: 'Sistema' },
-    metrics: [
-      ['leads ativos', '127'],
-      ['conversao media', '8.4%'],
-      ['tickets abertos', '12'],
-      ['resolucao no prazo', '94%'],
-    ],
+    context: {
+      workspace: 'Workspace: Revenue Ops',
+      sync: 'Sync: ha 2 min',
+      env: 'Env: production',
+    },
+    metrics: {
+      labels: {
+        mrr: 'MRR total',
+        churn: 'Churn mensal',
+        activation: 'Ativacao onboarding',
+        nps: 'NPS operacional',
+      },
+      period: {
+        '7d': { mrr: 'R$ 286k', churn: '1.2%', activation: '71%', nps: '54' },
+        '30d': { mrr: 'R$ 1.18M', churn: '1.8%', activation: '68%', nps: '49' },
+        '90d': { mrr: 'R$ 3.42M', churn: '2.1%', activation: '65%', nps: '46' },
+      },
+    },
+    filters: {
+      period: 'Periodo',
+      segment: 'Segmento',
+      lifecycle: 'Status da conta',
+      periodOptions: {
+        '7d': { label: '7 dias', description: 'Visao curta para operacao diaria' },
+        '30d': { label: '30 dias', description: 'Analise mensal para planejamento' },
+        '90d': { label: '90 dias', description: 'Tendencia trimestral de receita' },
+      },
+      segmentOptions: {
+        all: { label: 'Todos', description: 'SMB, Mid e Enterprise' },
+        smb: { label: 'SMB', description: 'Times ate 50 usuarios' },
+        mid: { label: 'Mid-Market', description: 'Operacao em crescimento' },
+        enterprise: { label: 'Enterprise', description: 'Contas com governanca forte' },
+      },
+      lifecycleOptions: {
+        all: { label: 'Todos', description: 'Qualquer fase de ciclo' },
+        trial: { label: 'Trial', description: 'Contas em ativacao inicial' },
+        active: { label: 'Active', description: 'Contas com receita recorrente' },
+        'at-risk': { label: 'At risk', description: 'Contas com sinais de risco' },
+      },
+    },
+    segments: {
+      smb: 'SMB',
+      mid: 'Mid-Market',
+      enterprise: 'Enterprise',
+    },
+    lifecycle: {
+      trial: 'Trial',
+      active: 'Active',
+      'at-risk': 'At risk',
+    },
     table: {
       section: 'pipeline de projetos',
-      title: 'Visao rapida de operacao e SLA',
-      search: 'Buscar projeto...',
-      cta: 'Novo item',
-      columns: { project: 'Projeto', status: 'Status', owner: 'Responsavel', sla: 'SLA' },
-      empty: 'Nenhum projeto encontrado para este filtro.',
+      title: 'Contas com receita, risco e previsao de renovacao',
+      search: 'Buscar conta, owner ou segmento...',
+      cta: 'Criar playbook',
+      columns: {
+        account: 'Conta',
+        segment: 'Segmento',
+        lifecycle: 'Status',
+        mrr: 'MRR',
+        owner: 'Owner',
+        renewal: 'Renovacao',
+      },
+      empty: 'Nenhuma conta para esse recorte. Ajuste os filtros.',
     },
     contact: {
       section: 'suporte',
@@ -59,25 +116,76 @@ const content = {
   en: {
     app: '__APP_NAME__',
     header: {
-      title: 'Operational dashboard ready for product teams',
-      subtitle: 'Dashboard template with table, filters, and support form wired to your lead flow.',
+      title: 'Operational cockpit to scale revenue with predictability',
+      subtitle: 'Template with decision filters, risk visibility, and support contact integrated with lead flow.',
     },
     language: 'Language',
     theme: 'Theme',
     themes: { dark: 'Dark', light: 'Light', system: 'System' },
-    metrics: [
-      ['active leads', '127'],
-      ['avg conversion', '8.4%'],
-      ['open tickets', '12'],
-      ['on-time resolution', '94%'],
-    ],
+    context: {
+      workspace: 'Workspace: Revenue Ops',
+      sync: 'Sync: 2 min ago',
+      env: 'Env: production',
+    },
+    metrics: {
+      labels: {
+        mrr: 'Total MRR',
+        churn: 'Monthly churn',
+        activation: 'Onboarding activation',
+        nps: 'Operational NPS',
+      },
+      period: {
+        '7d': { mrr: '$ 58k', churn: '1.2%', activation: '71%', nps: '54' },
+        '30d': { mrr: '$ 241k', churn: '1.8%', activation: '68%', nps: '49' },
+        '90d': { mrr: '$ 698k', churn: '2.1%', activation: '65%', nps: '46' },
+      },
+    },
+    filters: {
+      period: 'Period',
+      segment: 'Segment',
+      lifecycle: 'Account status',
+      periodOptions: {
+        '7d': { label: '7 days', description: 'Short horizon for daily ops' },
+        '30d': { label: '30 days', description: 'Monthly planning overview' },
+        '90d': { label: '90 days', description: 'Quarterly revenue trend' },
+      },
+      segmentOptions: {
+        all: { label: 'All', description: 'SMB, Mid, and Enterprise' },
+        smb: { label: 'SMB', description: 'Teams up to 50 users' },
+        mid: { label: 'Mid-Market', description: 'Growing operations' },
+        enterprise: { label: 'Enterprise', description: 'High-governance accounts' },
+      },
+      lifecycleOptions: {
+        all: { label: 'All', description: 'Any lifecycle stage' },
+        trial: { label: 'Trial', description: 'Accounts in early activation' },
+        active: { label: 'Active', description: 'Recurring revenue accounts' },
+        'at-risk': { label: 'At risk', description: 'Accounts showing risk signals' },
+      },
+    },
+    segments: {
+      smb: 'SMB',
+      mid: 'Mid-Market',
+      enterprise: 'Enterprise',
+    },
+    lifecycle: {
+      trial: 'Trial',
+      active: 'Active',
+      'at-risk': 'At risk',
+    },
     table: {
       section: 'project pipeline',
-      title: 'Quick operational and SLA overview',
-      search: 'Search project...',
-      cta: 'New item',
-      columns: { project: 'Project', status: 'Status', owner: 'Owner', sla: 'SLA' },
-      empty: 'No project found for this filter.',
+      title: 'Accounts with revenue, risk, and renewal forecast',
+      search: 'Search account, owner, or segment...',
+      cta: 'Create playbook',
+      columns: {
+        account: 'Account',
+        segment: 'Segment',
+        lifecycle: 'Status',
+        mrr: 'MRR',
+        owner: 'Owner',
+        renewal: 'Renewal',
+      },
+      empty: 'No account found for this filter set.',
     },
     contact: {
       section: 'support',
@@ -95,9 +203,51 @@ const content = {
 } as const
 
 const baseRows: ProjectRow[] = [
-  { project: 'Auralith Landing', status: 'Active', owner: 'Team A', sla: '4h' },
-  { project: 'Customer Dashboard', status: 'In Review', owner: 'Team B', sla: '8h' },
-  { project: 'Analytics Hub', status: 'Paused', owner: 'Team C', sla: '24h' },
+  {
+    account: 'Atlas Foods',
+    lifecycle: 'active',
+    segment: 'enterprise',
+    mrr: '$ 31k',
+    owner: 'Camila N.',
+    renewal: '14 May',
+    health: 'healthy',
+  },
+  {
+    account: 'Northbeam AI',
+    lifecycle: 'trial',
+    segment: 'mid',
+    mrr: '$ 7.8k',
+    owner: 'Rafael P.',
+    renewal: '28 May',
+    health: 'watch',
+  },
+  {
+    account: 'Prime Ledger',
+    lifecycle: 'at-risk',
+    segment: 'enterprise',
+    mrr: '$ 42k',
+    owner: 'Julia R.',
+    renewal: '02 Jun',
+    health: 'critical',
+  },
+  {
+    account: 'Studio Loop',
+    lifecycle: 'active',
+    segment: 'smb',
+    mrr: '$ 3.4k',
+    owner: 'Mateus C.',
+    renewal: '18 Jun',
+    health: 'healthy',
+  },
+  {
+    account: 'CloudPress',
+    lifecycle: 'active',
+    segment: 'mid',
+    mrr: '$ 12.2k',
+    owner: 'Sara V.',
+    renewal: '25 Jun',
+    health: 'watch',
+  },
 ]
 
 function getInitialLanguage(): Language {
@@ -134,6 +284,9 @@ function formatPhoneMask(value: string) {
 export function App() {
   const [language, setLanguage] = useState<Language>(() => getInitialLanguage())
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => getInitialThemeMode())
+  const [period, setPeriod] = useState<Period>('30d')
+  const [segment, setSegment] = useState<Segment>('all')
+  const [lifecycle, setLifecycle] = useState<Lifecycle>('all')
   const [search, setSearch] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const text = content[language]
@@ -160,10 +313,17 @@ export function App() {
     return ''
   }, [])
 
-  const rows = useMemo(
-    () => baseRows.filter((row) => `${row.project} ${row.owner} ${row.status}`.toLowerCase().includes(search.toLowerCase())),
-    [search],
-  )
+  const rows = useMemo(() => {
+    return baseRows.filter((row) => {
+      const searchable = `${row.account} ${row.owner} ${row.segment}`.toLowerCase()
+      const bySearch = searchable.includes(search.toLowerCase())
+      const bySegment = segment === 'all' ? true : row.segment === segment
+      const byLifecycle = lifecycle === 'all' ? true : row.lifecycle === lifecycle
+      return bySearch && bySegment && byLifecycle
+    })
+  }, [lifecycle, search, segment])
+
+  const metricValues = text.metrics.period[period]
 
   async function submitViaSupabase(formData: FormData) {
     if (!supabaseUrl || !supabasePublishableKey) return false
@@ -241,42 +401,74 @@ export function App() {
         <GlassPanel className="topbar">
           <Tag>{text.app}</Tag>
           <div className="controls">
-            <label>
-              <span>{text.language}</span>
-              <select onChange={(event) => setLanguage(event.target.value as Language)} value={language}>
-                <option value="pt">PT</option>
-                <option value="en">EN</option>
-              </select>
-            </label>
-            <label>
-              <span>{text.theme}</span>
-              <select onChange={(event) => setThemeMode(event.target.value as ThemeMode)} value={themeMode}>
-                <option value="dark">{text.themes.dark}</option>
-                <option value="light">{text.themes.light}</option>
-                <option value="system">{text.themes.system}</option>
-              </select>
-            </label>
+            <Select label={text.language} onValueChange={(value) => setLanguage(value === 'en' ? 'en' : 'pt')} value={language}>
+              <Select.Option description="Portugues" label="PT" value="pt" />
+              <Select.Option description="English" label="EN" value="en" />
+            </Select>
+            <Select
+              label={text.theme}
+              onValueChange={(value) => setThemeMode(value === 'light' || value === 'system' ? value : 'dark')}
+              value={themeMode}
+            >
+              <Select.Option description="Night contrast" label={text.themes.dark} value="dark" />
+              <Select.Option description="Neutral canvas" label={text.themes.light} value="light" />
+              <Select.Option description="OS preference" label={text.themes.system} value="system" />
+            </Select>
           </div>
         </GlassPanel>
 
         <GlassPanel className="hero">
-          <SectionLabel>dashboard template</SectionLabel>
+          <SectionLabel>dashboard cockpit</SectionLabel>
           <h1>{text.header.title}</h1>
           <p>{text.header.subtitle}</p>
+          <div className="context-strip">
+            <Tag>{text.context.workspace}</Tag>
+            <Tag>{text.context.sync}</Tag>
+            <Tag>{text.context.env}</Tag>
+          </div>
         </GlassPanel>
 
         <section className="metrics">
-          {text.metrics.map((metric) => (
-            <Card className="metric" key={metric[0]} variant="subtle">
-              <SectionLabel>{metric[0]}</SectionLabel>
-              <strong>{metric[1]}</strong>
-            </Card>
-          ))}
+          <Card className="metric" variant="subtle">
+            <SectionLabel>{text.metrics.labels.mrr}</SectionLabel>
+            <strong>{metricValues.mrr}</strong>
+          </Card>
+          <Card className="metric" variant="subtle">
+            <SectionLabel>{text.metrics.labels.churn}</SectionLabel>
+            <strong>{metricValues.churn}</strong>
+          </Card>
+          <Card className="metric" variant="subtle">
+            <SectionLabel>{text.metrics.labels.activation}</SectionLabel>
+            <strong>{metricValues.activation}</strong>
+          </Card>
+          <Card className="metric" variant="subtle">
+            <SectionLabel>{text.metrics.labels.nps}</SectionLabel>
+            <strong>{metricValues.nps}</strong>
+          </Card>
         </section>
 
         <section className="table-area">
           <SectionLabel>{text.table.section}</SectionLabel>
           <h2 className="section-title">{text.table.title}</h2>
+          <div className="filter-grid">
+            <Select label={text.filters.period} onValueChange={(value) => setPeriod(value as Period)} value={period}>
+              <Select.Option description={text.filters.periodOptions['7d'].description} label={text.filters.periodOptions['7d'].label} value="7d" />
+              <Select.Option description={text.filters.periodOptions['30d'].description} label={text.filters.periodOptions['30d'].label} value="30d" />
+              <Select.Option description={text.filters.periodOptions['90d'].description} label={text.filters.periodOptions['90d'].label} value="90d" />
+            </Select>
+            <Select label={text.filters.segment} onValueChange={(value) => setSegment(value as Segment)} value={segment}>
+              <Select.Option description={text.filters.segmentOptions.all.description} label={text.filters.segmentOptions.all.label} value="all" />
+              <Select.Option description={text.filters.segmentOptions.smb.description} label={text.filters.segmentOptions.smb.label} value="smb" />
+              <Select.Option description={text.filters.segmentOptions.mid.description} label={text.filters.segmentOptions.mid.label} value="mid" />
+              <Select.Option description={text.filters.segmentOptions.enterprise.description} label={text.filters.segmentOptions.enterprise.label} value="enterprise" />
+            </Select>
+            <Select label={text.filters.lifecycle} onValueChange={(value) => setLifecycle(value as Lifecycle)} value={lifecycle}>
+              <Select.Option description={text.filters.lifecycleOptions.all.description} label={text.filters.lifecycleOptions.all.label} value="all" />
+              <Select.Option description={text.filters.lifecycleOptions.trial.description} label={text.filters.lifecycleOptions.trial.label} value="trial" />
+              <Select.Option description={text.filters.lifecycleOptions.active.description} label={text.filters.lifecycleOptions.active.label} value="active" />
+              <Select.Option description={text.filters.lifecycleOptions['at-risk'].description} label={text.filters.lifecycleOptions['at-risk'].label} value="at-risk" />
+            </Select>
+          </div>
           <TableToolbar
             onSearchValueChange={setSearch}
             primaryAction={<Button variant="secondary">{text.table.cta}</Button>}
@@ -285,16 +477,22 @@ export function App() {
           />
           <DataTable<ProjectRow>
             columns={[
-              { key: 'project', header: text.table.columns.project },
+              { key: 'account', header: text.table.columns.account },
               {
-                key: 'status',
-                header: text.table.columns.status,
+                key: 'segment',
+                header: text.table.columns.segment,
+                render: (row) => text.segments[row.segment],
+              },
+              {
+                key: 'lifecycle',
+                header: text.table.columns.lifecycle,
                 render: (row) => (
-                  <Tag className="status-tag">{row.status}</Tag>
+                  <Tag className={`status-tag ${row.health}`}>{text.lifecycle[row.lifecycle]}</Tag>
                 ),
               },
+              { key: 'mrr', header: text.table.columns.mrr, align: 'right' },
               { key: 'owner', header: text.table.columns.owner },
-              { key: 'sla', header: text.table.columns.sla, align: 'right' },
+              { key: 'renewal', header: text.table.columns.renewal, align: 'right' },
             ]}
             data={rows}
             empty={text.table.empty}

@@ -287,9 +287,9 @@ async function main() {
   const packageRoot = path.resolve(path.dirname(thisFilePath), '..')
   const packagedTemplatesRoot = path.join(packageRoot, 'templates')
   const monorepoTemplatesRoot = path.resolve(packageRoot, '..', '..', 'templates')
-  const templatesRoot = (await pathExists(path.join(packagedTemplatesRoot, template)))
-    ? packagedTemplatesRoot
-    : monorepoTemplatesRoot
+  const templatesRoot = (await pathExists(path.join(monorepoTemplatesRoot, template)))
+    ? monorepoTemplatesRoot
+    : packagedTemplatesRoot
   const templateDir = path.join(templatesRoot, template)
 
   if (!(await pathExists(templateDir))) {
