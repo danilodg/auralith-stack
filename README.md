@@ -82,6 +82,7 @@ Both templates include:
 - `CHANGELOG.pt-BR.md`
 - `docs/getting-started.md`
 - `docs/conventions.md`
+- `docs/design-spec-v0.2.md`
 - `docs/deploy/github-pages.md`
 - `docs/deploy/vercel.md`
 - `docs/milestone-3-issues.md`
