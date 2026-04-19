@@ -84,3 +84,4 @@ Both templates include:
 - `docs/deploy/vercel.md`
 - `docs/milestone-3-issues.md`
 - `docs/milestone-3-release-notes.md`
+- `docs/release-v0.1.3.md`
