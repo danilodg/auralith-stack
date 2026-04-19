@@ -1,0 +1,24 @@
+{
+  "name": "create-auralith-app",
+  "version": "0.1.0",
+  "description": "CLI to scaffold Auralith Stack projects",
+  "type": "module",
+  "bin": {
+    "create-auralith-app": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --enable-source-maps src/index.ts"
+  },
+  "keywords": [
+    "auralith",
+    "scaffold",
+    "cli",
+    "react"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,65 @@
+:root {
+  font-family: 'Space Grotesk', 'Trebuchet MS', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-base);
+  color: var(--text-main);
+}
+
+.page {
+  min-height: 100svh;
+  padding: 2rem 1rem;
+}
+
+.container {
+  margin: 0 auto;
+  max-width: 1040px;
+  display: grid;
+  gap: 1rem;
+}
+
+.hero {
+  padding: 2rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.hero p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--text-soft);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.item {
+  padding: 1rem;
+}
+
+.item h2 {
+  margin: 0.5rem 0 0.35rem;
+  font-size: 1.12rem;
+}
+
+.item p {
+  margin: 0;
+  color: var(--text-soft);
+}
