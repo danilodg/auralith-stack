@@ -285,8 +285,12 @@ async function main() {
 
   const thisFilePath = fileURLToPath(import.meta.url)
   const packageRoot = path.resolve(path.dirname(thisFilePath), '..')
-  const repoRoot = path.resolve(packageRoot, '..', '..')
-  const templateDir = path.join(repoRoot, 'templates', template)
+  const packagedTemplatesRoot = path.join(packageRoot, 'templates')
+  const monorepoTemplatesRoot = path.resolve(packageRoot, '..', '..', 'templates')
+  const templatesRoot = (await pathExists(path.join(packagedTemplatesRoot, template)))
+    ? packagedTemplatesRoot
+    : monorepoTemplatesRoot
+  const templateDir = path.join(templatesRoot, template)
 
   if (!(await pathExists(templateDir))) {
     throw new CliError(
