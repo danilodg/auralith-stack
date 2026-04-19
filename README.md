@@ -78,6 +78,7 @@ Both templates include:
 
 ## Documentation
 
+- `CHANGELOG.md`
 - `docs/getting-started.md`
 - `docs/conventions.md`
 - `docs/deploy/github-pages.md`
