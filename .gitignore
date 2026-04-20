@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.log
 packages/create-auralith-app/smoke-*/
+examples/
+*.tsbuildinfo
