@@ -41,3 +41,8 @@
 1. `npm run build` in `packages/create-auralith-app`.
 2. Scaffold at least one template locally (`landing` and ideally `dashboard`).
 3. Run `npm install && npm run build` in generated app(s).
+
+## Cross-repo safety
+- Treat `/home/danilo-gomes/frz-community` as a work repository that is not part of the user's personal repo flow.
+- Never modify `/home/danilo-gomes/frz-community` unless the user explicitly asks for changes in that repository.
+- When the user asks to operate on "my repos", exclude `frz-community` by default.
