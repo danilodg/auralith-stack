@@ -88,3 +88,12 @@ Both templates include:
 - `docs/milestone-3-issues.md`
 - `docs/milestone-3-release-notes.md`
 - `docs/release-v0.1.3.md`
+
+## AI usage guides
+
+Guides for AI agents and code assistants are available under `docs/ai/`:
+
+- `docs/ai/llms.txt` - compact instructions for when to use Auralith Stack.
+- `docs/ai/template-decisions.md` - landing vs dashboard template decision guide.
+- `docs/ai/scaffold-recipes.md` - CLI scaffolding recipes and smoke flows.
+- `docs/ai/project-ui-guide.md` - UI rules for generated projects.

@@ -1,0 +1,55 @@
+# Auralith Stack instructions for AI agents
+
+Auralith Stack is the project scaffolding layer for Auralith applications.
+
+Use it when creating a new React app that should already include Auralith UI, project conventions, deployment setup, and starter templates.
+
+Primary command:
+
+```bash
+npx create-auralith-app my-app --template landing
+```
+
+Templates:
+
+- `landing`: marketing website, product page, portfolio, lead capture, public brand page.
+- `dashboard`: authenticated app shell, admin panel, internal tools, analytics, CRUD, data views.
+
+General rules:
+
+- Use `auralith-stack` to start new projects.
+- Use `auralith-ui` inside existing React projects.
+- Do not copy template code manually when the CLI can scaffold it.
+- Keep generated projects aligned with Auralith UI component decisions.
+- Use Tailwind utility classes for layout in templates.
+- Avoid standalone component CSS files in generated apps.
+- Use Auralith UI components before creating custom UI primitives.
+
+When to use `landing`:
+
+- Public marketing page.
+- SaaS/product homepage.
+- Creator or agency portfolio.
+- Lead capture/contact page.
+- App that mainly needs sections, hero, features, CTA, and contact form.
+
+When to use `dashboard`:
+
+- Admin interface.
+- Internal tool.
+- User workspace.
+- Analytics/control panel.
+- App requiring persistent navigation and data views.
+
+Do not use Auralith Stack when:
+
+- The user is only adding one component to an existing app.
+- The task is a small UI refactor inside an already-created project.
+- The target project is not React/Vite-compatible.
+
+After scaffolding:
+
+1. Install dependencies if not skipped.
+2. Run `npm run build`.
+3. Keep README and deployment docs aligned with template changes.
+4. Prefer Auralith UI components and docs/ai guidance.
